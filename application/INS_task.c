@@ -98,6 +98,7 @@ static void imu_cmd_spi_dma(void);
 
 
 
+// FIXME:
 extern SPI_HandleTypeDef hspi1;
 
 
@@ -200,15 +201,6 @@ void INS_task(void const *pvParameters)
     //获取当前任务的任务句柄，
     INS_task_local_handler = xTaskGetHandle(pcTaskGetName(NULL));
 
-    //set spi frequency
-    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
-
-    if (HAL_SPI_Init(&hspi1) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-
     SPI1_DMA_init((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
 
     imu_start_dma_flag = 1;
@@ -272,6 +264,7 @@ void INS_task(void const *pvParameters)
         Angle[1] = INS_angle[1] * 180.0f / 3.1415926f;
         Angle[2] = INS_angle[2] * 180.0f / 3.1415926f;
         /************************************/
+				/**usart1_printf("gyro angle %lf %lf %lf \n",Angle[0],Angle[1],Angle[2]);*/
 
         //because no use ist8310 and save time, no use
         if(mag_update_flag &= 1 << IMU_DR_SHFITS)
@@ -574,44 +567,39 @@ static void imu_cmd_spi_dma(void)
     uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
 
     //开启陀螺仪的DMA传输
-    if( (gyro_update_flag & (1 << IMU_DR_SHFITS) ) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) && !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN)
-        && !(accel_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS)))
-    {
-        gyro_update_flag &= ~(1 << IMU_DR_SHFITS);
-        gyro_update_flag |= (1 << IMU_SPI_SHFITS);
+		// FIXME:
+		if( (gyro_update_flag & (1 << IMU_DR_SHFITS) ) && !LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_2) && !LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_3) && !(accel_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS)))
+		{
+				gyro_update_flag &= ~(1 << IMU_DR_SHFITS);
+				gyro_update_flag |= (1 << IMU_SPI_SHFITS);
 
-        HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_RESET);
-        SPI1_DMA_enable((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
-        taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-        return;
-    }
+				HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_RESET);
+				SPI1_DMA_enable((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
+				taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+				return;
+		}
     //开启加速度计的DMA传输
-    if((accel_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) && !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN)
-       && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS)))
-    {
-        accel_update_flag &= ~(1 << IMU_DR_SHFITS);
-        accel_update_flag |= (1 << IMU_SPI_SHFITS);
+		// FIXME:
+		if((accel_update_flag & (1 << IMU_DR_SHFITS)) && !LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_2) && !LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_3) && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHFITS)))
+		{
+				accel_update_flag &= ~(1 << IMU_DR_SHFITS);
+				accel_update_flag |= (1 << IMU_SPI_SHFITS);
+				HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_RESET);
+				SPI1_DMA_enable((uint32_t)accel_dma_tx_buf, (uint32_t)accel_dma_rx_buf, SPI_DMA_ACCEL_LENGHT);
+				taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+				return;
+		}
 
-        HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_RESET);
-        SPI1_DMA_enable((uint32_t)accel_dma_tx_buf, (uint32_t)accel_dma_rx_buf, SPI_DMA_ACCEL_LENGHT);
-        taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-        return;
-    }
-
-
-
-
-    if((accel_temp_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) && !(hspi1.hdmarx->Instance->CR & DMA_SxCR_EN)
-       && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_update_flag & (1 << IMU_SPI_SHFITS)))
-    {
-        accel_temp_update_flag &= ~(1 << IMU_DR_SHFITS);
-        accel_temp_update_flag |= (1 << IMU_SPI_SHFITS);
-
-        HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_RESET);
-        SPI1_DMA_enable((uint32_t)accel_temp_dma_tx_buf, (uint32_t)accel_temp_dma_rx_buf, SPI_DMA_ACCEL_TEMP_LENGHT);
-        taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-        return;
-    }
+		// FIXME:
+		if((accel_temp_update_flag & (1 << IMU_DR_SHFITS)) && !LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_2) && !LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_3) && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_update_flag & (1 << IMU_SPI_SHFITS)))
+		{
+				accel_temp_update_flag &= ~(1 << IMU_DR_SHFITS);
+				accel_temp_update_flag |= (1 << IMU_SPI_SHFITS);
+				HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_RESET);
+				SPI1_DMA_enable((uint32_t)accel_temp_dma_tx_buf, (uint32_t)accel_temp_dma_rx_buf, SPI_DMA_ACCEL_TEMP_LENGHT);
+				taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+				return;
+		}
     taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
 }
 
@@ -619,48 +607,53 @@ static void imu_cmd_spi_dma(void)
 void DMA2_Stream2_IRQHandler(void)
 {
 
-    if(__HAL_DMA_GET_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx)) != RESET)
-    {
-        __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx));
+		// FIXME:
+		/**if(__HAL_DMA_GET_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx)) != RESET)*/
+		/**{*/
+		/**    __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx));*/
+		if(LL_DMA_IsActiveFlag_TC2(DMA2))
+		{
+				/**__HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx));*/
+				LL_DMA_ClearFlag_TC2(DMA2);
 
-        //gyro read over
-        //陀螺仪读取完毕
-        if(gyro_update_flag & (1 << IMU_SPI_SHFITS))
-        {
-            gyro_update_flag &= ~(1 << IMU_SPI_SHFITS);
-            gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
+				//gyro read over
+				//陀螺仪读取完毕
+				if(gyro_update_flag & (1 << IMU_SPI_SHFITS))
+				{
+						gyro_update_flag &= ~(1 << IMU_SPI_SHFITS);
+						gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
 
-            HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_SET);
 
-        }
+				}
 
-        //accel read over
-        //加速度计读取完毕
-        if(accel_update_flag & (1 << IMU_SPI_SHFITS))
-        {
-            accel_update_flag &= ~(1 << IMU_SPI_SHFITS);
-            accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
+				//accel read over
+				//加速度计读取完毕
+				if(accel_update_flag & (1 << IMU_SPI_SHFITS))
+				{
+						accel_update_flag &= ~(1 << IMU_SPI_SHFITS);
+						accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
 
-            HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
-        }
-        //temperature read over
-        //温度读取完毕
-        if(accel_temp_update_flag & (1 << IMU_SPI_SHFITS))
-        {
-            accel_temp_update_flag &= ~(1 << IMU_SPI_SHFITS);
-            accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
+						HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
+				}
+				//temperature read over
+				//温度读取完毕
+				if(accel_temp_update_flag & (1 << IMU_SPI_SHFITS))
+				{
+						accel_temp_update_flag &= ~(1 << IMU_SPI_SHFITS);
+						accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
 
-            HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
-        }
+						HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
+				}
 
-        imu_cmd_spi_dma();
+				imu_cmd_spi_dma();
 
-        if(gyro_update_flag & (1 << IMU_UPDATE_SHFITS))
-        {
-            gyro_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
-            gyro_update_flag |= (1 << IMU_NOTIFY_SHFITS);
-            __HAL_GPIO_EXTI_GENERATE_SWIT(GPIO_PIN_0);
-        }
-    }
+				if(gyro_update_flag & (1 << IMU_UPDATE_SHFITS))
+				{
+						gyro_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
+						gyro_update_flag |= (1 << IMU_NOTIFY_SHFITS);
+						__HAL_GPIO_EXTI_GENERATE_SWIT(GPIO_PIN_0);
+				}
+		}
 }
 

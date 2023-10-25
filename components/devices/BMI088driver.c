@@ -1,6 +1,7 @@
 #include "BMI088driver.h"
 #include "BMI088reg.h"
 #include "BMI088Middleware.h"
+#include "bsp_usart.h"
 
 
 fp32 BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
@@ -92,23 +93,28 @@ uint8_t BMI088_init(void)
     BMI088_GPIO_init();
     BMI088_com_init();
 
+		usart1_printf("hi");
     // self test pass and init
     if (bmi088_accel_self_test() != BMI088_NO_ERROR)
     {
         error |= BMI088_SELF_TEST_ACCEL_ERROR;
+		usart1_printf("e1\n");
     }
     else
     {
         error |= bmi088_accel_init();
+		usart1_printf("e2\n");
     }
 
     if (bmi088_gyro_self_test() != BMI088_NO_ERROR)
     {
         error |= BMI088_SELF_TEST_GYRO_ERROR;
+		usart1_printf("e3\n");
     }
     else
     {
         error |= bmi088_gyro_init();
+		usart1_printf("e4\n");
     }
 
     return error;

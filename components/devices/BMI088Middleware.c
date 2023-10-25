@@ -2,7 +2,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "bsp_delay.h"
-extern SPI_HandleTypeDef hspi1;
+/**extern SPI_HandleTypeDef hspi1;*/
 
 void BMI088_GPIO_init(void)
 {
@@ -50,7 +50,8 @@ void BMI088_GYRO_NS_H(void)
 uint8_t BMI088_read_write_byte(uint8_t txdata)
 {
     uint8_t rx_data;
-    HAL_SPI_TransmitReceive(&hspi1, &txdata, &rx_data, 1, 1000);
-    return rx_data;
+		// FIXME:
+    /**HAL_SPI_TransmitReceive(&hspi1, &txdata, &rx_data, 1, 1000);*/
+    /**return rx_data;*/
 }
 
