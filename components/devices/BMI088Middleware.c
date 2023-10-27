@@ -51,7 +51,13 @@ uint8_t BMI088_read_write_byte(uint8_t txdata)
 {
     uint8_t rx_data;
 		// FIXME:
-    /**HAL_SPI_TransmitReceive(&hspi1, &txdata, &rx_data, 1, 1000);*/
-    /**return rx_data;*/
+		/**HAL_SPI_TransmitReceive(&hspi1, &txdata, &rx_data, 1, 1000);*/
+		while(!(SPI1->SR & SPI_SR_TXE));
+		LL_SPI_TransmitData8(SPI1, txdata);
+		while (SPI1->SR & SPI_SR_BSY);
+		while(!(SPI1->SR & SPI_SR_RXNE));
+		rx_data = LL_SPI_ReceiveData8(SPI1);
+		while (SPI1->SR & SPI_SR_BSY);
+		return rx_data;
 }
 

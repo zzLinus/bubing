@@ -23,6 +23,7 @@
 
 #include "INS_task.h"
 
+#include "bsp_usart.h"
 #include "main.h"
 
 #include "cmsis_os.h"
@@ -99,9 +100,6 @@ static void imu_cmd_spi_dma(void);
 
 
 // FIXME:
-extern SPI_HandleTypeDef hspi1;
-
-
 static TaskHandle_t INS_task_local_handler;
 
 uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT];
@@ -178,6 +176,7 @@ void INS_task(void const *pvParameters)
 {
     //wait a time
     osDelay(INS_TASK_INIT_TIME);
+		LL_SPI_Enable(SPI1);
     while(BMI088_init())
     {
         osDelay(100);
@@ -264,7 +263,7 @@ void INS_task(void const *pvParameters)
         Angle[1] = INS_angle[1] * 180.0f / 3.1415926f;
         Angle[2] = INS_angle[2] * 180.0f / 3.1415926f;
         /************************************/
-				/**usart1_printf("gyro angle %lf %lf %lf \n",Angle[0],Angle[1],Angle[2]);*/
+				usart1_printf("gyro angle %d %d %d \n",(int)Angle[0], (int)Angle[1], (int)Angle[2]);
 
         //because no use ist8310 and save time, no use
         if(mag_update_flag &= 1 << IMU_DR_SHFITS)
@@ -510,6 +509,7 @@ extern const fp32 *get_mag_data_point(void)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+		usart1_printf("exti callback\n");
     if(GPIO_Pin == INT1_ACCEL_Pin)
     {
         detect_hook(BOARD_ACCEL_TOE);
@@ -606,7 +606,6 @@ static void imu_cmd_spi_dma(void)
 
 void DMA2_Stream2_IRQHandler(void)
 {
-
 		// FIXME:
 		/**if(__HAL_DMA_GET_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx)) != RESET)*/
 		/**{*/
@@ -614,7 +613,8 @@ void DMA2_Stream2_IRQHandler(void)
 		if(LL_DMA_IsActiveFlag_TC2(DMA2))
 		{
 				/**__HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx));*/
-				LL_DMA_ClearFlag_TC2(DMA2);
+				/**LL_DMA_ClearFlag_TC2(DMA2);*/
+				/**usart1_printf("dma callback!\n");*/
 
 				//gyro read over
 				//陀螺仪读取完毕
@@ -623,6 +623,7 @@ void DMA2_Stream2_IRQHandler(void)
 						gyro_update_flag &= ~(1 << IMU_SPI_SHFITS);
 						gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
 
+						usart1_printf("gyro!\n");
 						HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_SET);
 
 				}
@@ -634,6 +635,7 @@ void DMA2_Stream2_IRQHandler(void)
 						accel_update_flag &= ~(1 << IMU_SPI_SHFITS);
 						accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
 
+						usart1_printf("accel!\n");
 						HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
 				}
 				//temperature read over
@@ -643,6 +645,7 @@ void DMA2_Stream2_IRQHandler(void)
 						accel_temp_update_flag &= ~(1 << IMU_SPI_SHFITS);
 						accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
 
+						usart1_printf("temp!\n");
 						HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
 				}
 
@@ -652,6 +655,7 @@ void DMA2_Stream2_IRQHandler(void)
 				{
 						gyro_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
 						gyro_update_flag |= (1 << IMU_NOTIFY_SHFITS);
+						usart1_printf("update!\n");
 						__HAL_GPIO_EXTI_GENERATE_SWIT(GPIO_PIN_0);
 				}
 		}

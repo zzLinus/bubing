@@ -93,7 +93,7 @@ uint8_t BMI088_init(void)
     BMI088_GPIO_init();
     BMI088_com_init();
 
-		usart1_printf("hi");
+		usart1_printf("hi\n");
     // self test pass and init
     if (bmi088_accel_self_test() != BMI088_NO_ERROR)
     {

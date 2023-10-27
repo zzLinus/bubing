@@ -1,4 +1,5 @@
 #include "bsp_spi.h"
+#include "bsp_usart.h"
 #include "main.h"
 
 /**extern SPI_HandleTypeDef hspi1;*/
@@ -18,7 +19,7 @@ void SPI1_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num)
 
     //disable DMA
     //失效DMA (rx)
-    /**__HAL_DMA_DISABLE(&hdma_spi1_rx);*/
+		/**__HAL_DMA_DISABLE(&hdma_spi1_rx);*/
 		LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_2);
 
     /**while(hdma_spi1_rx.Instance->CR & DMA_SxCR_EN)*/
@@ -29,7 +30,8 @@ void SPI1_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num)
     }
 
 		// FIXME:
-    /**__HAL_DMA_CLEAR_FLAG(&hdma_spi1_rx, DMA_LISR_TCIF2);*/
+		/**__HAL_DMA_CLEAR_FLAG(&hdma_spi1_rx, DMA_LISR_TCIF2);*/
+		WRITE_REG(DMA2->LIFCR, DMA_LISR_TCIF2);
 
     /**hdma_spi1_rx.Instance->PAR = (uint32_t) & (SPI1->DR);*/
 		LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_2, (uint32_t) & (SPI1->DR));
@@ -41,11 +43,14 @@ void SPI1_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num)
 
     //data length
     //数据长度
-    /**__HAL_DMA_SET_COUNTER(&hdma_spi1_rx, num);*/
+		/**__HAL_DMA_SET_COUNTER(&hdma_spi1_rx, num);*/
 		LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_2, num);
 
     /**__HAL_DMA_ENABLE_IT(&hdma_spi1_rx, DMA_IT_TC);*/
 		LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_2);
+		LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_2);
+
+		LL_SPI_EnableDMAReq_RX(SPI1);
 
 
     //disable DMA
@@ -61,6 +66,7 @@ void SPI1_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num)
 
 		// FIXME:
     /**__HAL_DMA_CLEAR_FLAG(&hdma_spi1_tx, DMA_LISR_TCIF3);*/
+		WRITE_REG(DMA2->LIFCR, DMA_LISR_TCIF3);
 
     /**hdma_spi1_tx.Instance->PAR = (uint32_t) & (SPI1->DR);*/
 		LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_3, (uint32_t) & (SPI1->DR));
@@ -71,13 +77,14 @@ void SPI1_DMA_init(uint32_t tx_buf, uint32_t rx_buf, uint16_t num)
     //data length
     //数据长度
     /**__HAL_DMA_SET_COUNTER(&hdma_spi1_tx, num);*/
-		LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_3);
+		LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_3, num);
+		LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_3);
 }
 
 void SPI1_DMA_enable(uint32_t tx_buf, uint32_t rx_buf, uint16_t ndtr)
 {
     /**__HAL_DMA_DISABLE(&hdma_spi1_rx);*/
-    /**__HAL_DMA_DISABLE(&hdma_spi1_tx);*/
+		/**__HAL_DMA_DISABLE(&hdma_spi1_tx);*/
 		LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_2);
 		LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_3);
 
