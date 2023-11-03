@@ -172,11 +172,11 @@ void QuaternionToEulerAngles(double qx, double qy, double qz, double qw) {
   a = atan2f(2.f * (qw * qx + qy * qz), 1 - 2 * (qx * qx + qy * qy));
   b = asinf(2.f * (qw * qy - qz * qx));
   c = atan2f(2.f * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz));
-	INS_angle[0] = c * RAD;
-	INS_angle[1] = a * RAD;
-	INS_angle[2] = b * RAD;
-  /**printf("a=%lf deg b=%lf deg c=%lf deg ", Ψ * RAD, θ * RAD, Φ * RAD);*/
-	/**osDelay(10);*/
+	INS_angle[0] = c;
+	INS_angle[1] = a;
+	INS_angle[2] = b;
+	printf("a=%lf deg b=%lf deg c=%lf deg ", a * RAD, b * RAD, c * RAD);
+	osDelay(10);
 }
 
 void INS_task(void const *pvParameters) {
@@ -239,12 +239,12 @@ void INS_task(void const *pvParameters) {
 				printf("High\n");
       }
 
-		  INS_gyro[0] = (float)BNO080_getAccelX();
-      INS_gyro[1] = (float)BNO080_getAccelY();
-      INS_gyro[2] = (float)BNO080_getAccelZ();
-      sensorAccuracy = BNO080_getAccelAccuracy();
-		/**printf("Accel : x=%lf y=%lf z=%lf ", INS_gyro[0], INS_gyro[1], INS_gyro[2]);*/
-				/**osDelay(10);*/
+		  INS_gyro[0] = -(float)BNO080_getGyroX();
+      INS_gyro[1] = -(float)BNO080_getGyroY();
+      INS_gyro[2] = (float)BNO080_getGyroZ();
+      sensorAccuracy = BNO080_getGyroAccuracy();
+		printf("Gyro : x=%lf y=%lf z=%lf ", INS_gyro[0], INS_gyro[1], INS_gyro[2]);
+				osDelay(20);
 
       if (sensorAccuracy == 0) {
         printf("Unreliable\n");
