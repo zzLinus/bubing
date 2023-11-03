@@ -96,6 +96,7 @@
   */
 
 #include "calibrate_task.h"
+#include "bsp_usart.h"
 #include "string.h"
 #include "cmsis_os.h"
 
