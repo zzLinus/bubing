@@ -173,10 +173,8 @@ void QuaternionToEulerAngles(double qx, double qy, double qz, double qw) {
   b = asinf(2.f * (qw * qy - qz * qx));
   c = atan2f(2.f * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz));
 	INS_angle[0] = c;
-	INS_angle[1] = a;
-	INS_angle[2] = b;
-	printf("a=%lf deg b=%lf deg c=%lf deg ", a * RAD, b * RAD, c * RAD);
-	osDelay(10);
+	INS_angle[1] = b;
+	INS_angle[2] = a;
 }
 
 void INS_task(void const *pvParameters) {
@@ -195,6 +193,7 @@ void INS_task(void const *pvParameters) {
   BNO080_enableGameRotationVector(2000); // Send data update every 20ms (50Hz)
   BNO080_enableMagnetometer(2000);       // Send data update every 20ms (50Hz)
   BNO080_enableGyro(2000);
+  BNO080_enableLinearAccelerometer(2000);
 	BNO080_enableAccelerometer(2000);
 
   // Once magnetic field is 2 or 3, run the Save DCD Now command
@@ -229,32 +228,32 @@ void INS_task(void const *pvParameters) {
       QuaternionToEulerAngles(quatI, quatJ, quatK, quatReal);
 
 
-      if (sensorAccuracy == 0) {
-        printf("Unreliable\n");
-      } else if (sensorAccuracy == 1) {
-        printf("Low\n");
-      } else if (sensorAccuracy == 2) {
-        printf("Medium\n");
-      } else if (sensorAccuracy == 3) {
-				printf("High\n");
-      }
+      /**if (sensorAccuracy == 0) {*/
+      /**  printf("Unreliable\n");*/
+      /**} else if (sensorAccuracy == 1) {*/
+      /**  printf("Low\n");*/
+      /**} else if (sensorAccuracy == 2) {*/
+      /**  printf("Medium\n");*/
+      /**} else if (sensorAccuracy == 3) {*/
+			/**  printf("High\n");*/
+      /**}*/
 
-		  INS_gyro[0] = -(float)BNO080_getGyroX();
-      INS_gyro[1] = -(float)BNO080_getGyroY();
-      INS_gyro[2] = (float)BNO080_getGyroZ();
+		  INS_gyro[0] = (float)BNO080_getGyroX(); // yaw
+      INS_gyro[1] = (float)BNO080_getGyroY(); // pitch
+      INS_gyro[2] = (float)BNO080_getGyroZ();  // row
       sensorAccuracy = BNO080_getGyroAccuracy();
-		printf("Gyro : x=%lf y=%lf z=%lf ", INS_gyro[0], INS_gyro[1], INS_gyro[2]);
-				osDelay(20);
+		printf("%lf,%lf,%lf,%lf,%lf,%lf\r\n", INS_angle[0],INS_angle[1],INS_angle[2],INS_gyro[0], INS_gyro[1], INS_gyro[2]);
+		osDelay(10);
 
-      if (sensorAccuracy == 0) {
-        printf("Unreliable\n");
-      } else if (sensorAccuracy == 1) {
-        printf("Low\n");
-      } else if (sensorAccuracy == 2) {
-        printf("Medium\n");
-      } else if (sensorAccuracy == 3) {
-				printf("High\n");
-      }
+      /**if (sensorAccuracy == 0) {*/
+      /**  printf("Unreliable\n");*/
+      /**} else if (sensorAccuracy == 1) {*/
+      /**  printf("Low\n");*/
+      /**} else if (sensorAccuracy == 2) {*/
+			/**  printf("Medium\n");*/
+      /**} else if (sensorAccuracy == 3) {*/
+			/**  printf("High\n");*/
+      /**}*/
 
 
     // 加速度计低通滤波

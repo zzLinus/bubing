@@ -27,12 +27,14 @@
 
 #include "gimbal_task.h"
 
+#include "bsp_usart.h"
 #include "main.h"
 
 #include "cmsis_os.h"
 
 #include "arm_math.h"
 #include "CAN_receive.h"
+#include "usart.h"
 #include "user_lib.h"
 #include "detect_task.h"
 #include "remote_control.h"
@@ -380,6 +382,12 @@ void gimbal_task(void const *pvParameters)
 //				usb_debug("\x03\xFC%c%c%c%c\xFC\x03", (int8_t)(gimbal_control.fric1_motor.speed/80), (int8_t)(gimbal_control.fric1_motor.speed_set/80),
 //																							(int8_t)(gimbal_control.fric2_motor.speed/80), (int8_t)(gimbal_control.fric2_motor.speed_set/80));
 
+
+/**    usart1_printf("%lf,%lf,%lf,%lf,%lf,%lf \n",gimbal_control.gimbal_yaw_motor.relative_angle,gimbal_control.gimbal_yaw_motor.relative_angle_set*/
+/**            ,gimbal_control.gimbal_yaw_motor.absolute_angle,gimbal_control.gimbal_yaw_motor.absolute_angle_set,*/
+/**gimbal_control.gimbal_yaw_motor.motor_gyro,gimbal_control.gimbal_yaw_motor.motor_gyro_set*/
+/**            );*/
+/**osDelay(10);*/
         if (!(toe_is_error(YAW_GIMBAL_MOTOR_TOE) && toe_is_error(PITCH_GIMBAL_MOTOR_TOE) && toe_is_error(TRIGGER_MOTOR_TOE)))
         {
             if (toe_is_error(DBUS_TOE))
