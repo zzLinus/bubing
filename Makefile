@@ -40,6 +40,7 @@ Src/main.c \
 Src/gpio.c \
 Src/freertos.c \
 Src/adc.c \
+Src/com.c \
 Src/can.c \
 Src/crc.c \
 Src/dma.c \

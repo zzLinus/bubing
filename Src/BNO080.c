@@ -148,7 +148,7 @@ int BNO080_Initialization(void)
 	//Configure the BNO080 for SPI communication
 	WAKE_HIGH();	//Before boot up the PS0/WAK pin must be high to enter SPI mode
 	RESET_LOW();	//Reset BNO080
-	HAL_Delay(200);	//Min length not specified in datasheet?
+	osDelay(200);	//Min length not specified in datasheet?
 	RESET_HIGH();	//Bring out of reset
 	
 	BNO080_waitForSPI(); //Wait until INT pin goes low.

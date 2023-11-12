@@ -97,7 +97,6 @@ static void imu_temp_control(fp32 temp);
  */
 static void imu_cmd_spi_dma(void);
 
-// FIXME:
 static TaskHandle_t INS_task_local_handler;
 
 uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT];
@@ -131,6 +130,7 @@ ist8310_real_data_t ist8310_real_data;
 fp32 mag_scale_factor[3][3] = {IST8310_BOARD_INSTALL_SPIN_MATRIX};
 fp32 mag_offset[3];
 fp32 mag_cali_offset[3];
+uint8_t is_boot = 0;
 
 static uint8_t first_temperate;
 static const fp32 imu_temp_PID[3] = {TEMPERATURE_PID_KP, TEMPERATURE_PID_KI,
@@ -216,6 +216,7 @@ void INS_task(void const *pvParameters) {
   while (1) {
     // wait spi DMA tansmit done
     // 等待SPI DMA传输
+		is_boot = 1;
     while (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) != pdPASS) {
     }
 
@@ -242,7 +243,7 @@ void INS_task(void const *pvParameters) {
       INS_gyro[1] = (float)BNO080_getGyroY(); // pitch
       INS_gyro[2] = (float)BNO080_getGyroZ();  // row
       sensorAccuracy = BNO080_getGyroAccuracy();
-		printf("%lf,%lf,%lf,%lf,%lf,%lf\r\n", INS_angle[0],INS_angle[1],INS_angle[2],INS_gyro[0], INS_gyro[1], INS_gyro[2]);
+		printf("%lf,%lf,%lf,%lf,%lf,%lf\r\n", INS_angle[0],INS_angle[1],INS_angle[2],INS_gyro[0]*3, INS_gyro[1]*3, INS_gyro[2] * 3);
 		osDelay(10);
 
       /**if (sensorAccuracy == 0) {*/
@@ -509,7 +510,6 @@ extern const fp32 *get_accel_data_point(void) { return INS_accel; }
 extern const fp32 *get_mag_data_point(void) { return INS_mag; }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-
   if (GPIO_Pin == INT1_ACCEL_Pin) {
     detect_hook(BOARD_ACCEL_TOE);
     accel_update_flag |= 1 << IMU_DR_SHFITS;
@@ -531,6 +531,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     // wake up the task
     // 唤醒任务
     if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+			if(!is_boot) return;
       static BaseType_t xHigherPriorityTaskWoken;
       vTaskNotifyGiveFromISR(INS_task_local_handler, &xHigherPriorityTaskWoken);
       portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
